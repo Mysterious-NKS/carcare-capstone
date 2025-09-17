@@ -1,0 +1,6 @@
+/vendor/
+/public/uploads/
+/app/config/*.local.php
+.env
+.DS_Store
+Thumbs.db
