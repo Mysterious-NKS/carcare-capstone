@@ -1,4 +1,18 @@
 <?php
+session_start();
+
+// show errors during dev
+ini_set('display_errors','1');
+error_reporting(E_ALL);
+
+/* ...your BASE_URL code + helpers... */
+
+// make sure the DB class is available
+require_once __DIR__ . '/db.php';
+
+/* if you have an autoloader here, keep it;
+   this line guarantees DB is loaded even if the autoloader
+   doesn't scan the /config folder. */
 if (session_status() === PHP_SESSION_NONE) session_start();
 define('APP_NAME','CarCare');
 define('ROOT_PATH', dirname(__DIR__, 2));

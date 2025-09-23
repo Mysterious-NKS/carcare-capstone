@@ -65,8 +65,13 @@ class AuthController extends Controller {
         'email' => $u['email'],
         'role'  => $u['role'],
       ];
-      // todo (Phase 3): send STAFF to /staff, ADMIN to /admin
-      return $this->redirect('dashboard');
+     
+      // send them where they belong; easy to explain in a demo
+$role = $u['role'];
+if ($role === 'STAFF')  return $this->redirect('staff');
+if ($role === 'ADMIN')  return $this->redirect('admin');
+return $this->redirect('dashboard'); // default: customers
+
     } catch (Throwable $e) {
       return $this->redirect('login?e=server');
     }
