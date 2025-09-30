@@ -5,7 +5,10 @@
   <div class="bg-white border rounded-2xl shadow-card p-6">
     <div class="flex items-start justify-between">
       <div>
-        <h1 class="text-2xl font-bold mb-2"><?= $e($a['service_name']) ?></h1>
+        <h1 class="text-2xl font-bold mb-1"><?= $e($a['service_name']) ?></h1>
+        <div class="text-xs text-gray-500 mb-2">
+          Price: <?= number_format((float)($a['service_price'] ?? 0), 2) ?>
+        </div>
         <div class="text-sm text-gray-600">
           <?= $e($a['year'].' '.$a['make'].' '.$a['model']) ?> • Plate <?= $e($a['plate_no']) ?>
         </div>
@@ -13,6 +16,8 @@
           When: <?= date('Y-m-d • H:i', strtotime($a['scheduled_at'])) ?>
           <?php if (!empty($a['staff_name'])): ?>
             • Staff: <?= $e($a['staff_name']) ?>
+          <?php else: ?>
+            • Staff: TBA
           <?php endif; ?>
         </div>
       </div>
@@ -34,11 +39,16 @@
       </span>
     </div>
 
-    <?php if ($a['status'] !== 'CANCELLED' && $a['status'] !== 'COMPLETED'): ?>
-      <form method="post" action="<?= url('appointments/cancel') ?>" class="mt-6">
-        <input type="hidden" name="id" value="<?= (int)$a['id'] ?>">
-        <button class="px-5 py-2 rounded-full border">Cancel Appointment</button>
-      </form>
+    <?php if (!in_array($a['status'], ['CANCELLED','COMPLETED'], true)): ?>
+      <div class="mt-6 flex gap-3">
+        <a href="<?= url('appointments/'.$a['id'].'/reschedule') ?>"
+           class="px-5 py-2 rounded-full border hover:bg-gray-50">Reschedule</a>
+
+        <form method="post" action="<?= url('appointments/cancel') ?>">
+          <input type="hidden" name="id" value="<?= (int)$a['id'] ?>">
+          <button class="px-5 py-2 rounded-full border hover:bg-rose-50 text-rose-700">Cancel Appointment</button>
+        </form>
+      </div>
     <?php endif; ?>
   </div>
 </div>

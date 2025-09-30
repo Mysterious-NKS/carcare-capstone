@@ -20,6 +20,11 @@ class Auth {
     }
   }
 
+  /** alias used by some controllers (e.g., NotificationController) */
+  public static function requireLogin(){
+    self::requireAuth();
+  }
+
   /**
    * stop users without the right role.
    * example: Auth::requireRole('STAFF');  // only staff can pass

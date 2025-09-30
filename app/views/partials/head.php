@@ -1,20 +1,70 @@
-<?php $me=Auth::user(); ?>
+<?php $me = Auth::user(); ?>
 <!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= APP_NAME ?></title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={theme:{extend:{boxShadow:{card:'0 8px 24px rgba(0,0,0,.06)'}}}}</script>
 <link rel="stylesheet" href="<?= url('assets/css/app.css') ?>">
-</head><body class="bg-white text-gray-900">
-<header class="border-b"><div class="max-w-7xl mx-auto px-4 py-4 flex items-center gap-6">
-<a href="<?= url('') ?>" class="font-semibold text-xl">Logo</a>
-<nav class="hidden md:flex gap-6 text-sm"><a href="<?= url('') ?>" class="hover:underline">home</a><a class="hover:underline">about</a><a class="hover:underline">contact</a></nav>
-<div class="ml-auto flex items-center gap-3">
-<?php if($me): ?><span class="text-sm text-gray-600">Hi, <?= htmlspecialchars($me['name']) ?></span>
-<a class="px-4 py-2 rounded-full bg-black text-white" href="<?= url('dashboard') ?>">dashboard</a>
-<a class="px-3 py-2 rounded-full border" href="<?= url('logout') ?>">log out</a>
-<?php else: ?>
-<a class="px-3 py-2 rounded-full border" href="<?= url('login') ?>">log in</a>
-<a class="px-4 py-2 rounded-full bg-black text-white" href="<?= url('register') ?>">register</a>
-<?php endif; ?>
-</div></div></header><main>
+</head>
+<body class="bg-white text-gray-900">
+<header class="border-b">
+  <div class="max-w-7xl mx-auto px-4 py-4 flex items-center gap-6">
+    <?php
+      $role = $me['role'] ?? null;
+      $homeLink = ($role === 'STAFF') ? 'staff' : (($role === 'ADMIN') ? 'admin' : '');
+      $dashLink = ($role === 'STAFF') ? 'staff' : (($role === 'ADMIN') ? 'admin' : 'dashboard');
+    ?>
+    <a href="<?= url($homeLink) ?>" class="font-semibold text-xl" aria-label="Home">Logo</a>
+
+    <nav class="hidden md:flex gap-6 text-sm">
+      <a href="<?= url($homeLink) ?>" class="hover:underline">home</a>
+      <a href="<?= url('about') ?>" class="hover:underline">about</a>
+      <a href="<?= url('contact') ?>" class="hover:underline">contact</a>
+    </nav>
+
+    <div class="ml-auto flex items-center gap-3">
+      <?php if ($me): ?>
+        <?php
+          // Unread count with safe fallback if notifications table doesn't exist.
+          $unread = 0;
+          try {
+            $pdo = DB::pdo();
+            $st = $pdo->prepare("SELECT COUNT(*) FROM information_schema.tables 
+                                 WHERE table_schema = DATABASE() AND table_name = 'notifications'");
+            $st->execute();
+            if ((int)$st->fetchColumn() === 1) {
+              $c = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE user_id=? AND is_read=0");
+              $c->execute([(int)$me['id']]);
+              $unread = (int)$c->fetchColumn();
+            }
+          } catch (Throwable $e) { /* ignore — header should never explode */ }
+        ?>
+
+        <a href="<?= url('notifications') ?>"
+           class="notif-bell relative inline-flex items-center justify-center p-2 rounded-full border hover:bg-gray-50"
+           title="Notifications"
+           aria-label="Notifications<?= $unread ? ' — '.$unread.' unread' : '' ?>">
+          <?= function_exists('icon') ? icon('bell','h-6 w-6') : '' ?>
+          <?php if ($unread > 0): ?>
+            <span class="notif-badge" aria-hidden="true"><?= $unread ?></span>
+          <?php endif; ?>
+        </a>
+
+        <a href="<?= url('profile') ?>" class="text-sm text-gray-600 hover:underline">
+          Hi, <?= htmlspecialchars($me['name']) ?>
+        </a>
+
+        <a class="px-4 py-2 rounded-full bg-black text-white" href="<?= url($dashLink) ?>">dashboard</a>
+        <a class="px-3 py-2 rounded-full border" href="<?= url('logout') ?>">log out</a>
+      <?php else: ?>
+        <a class="px-3 py-2 rounded-full border" href="<?= url('login') ?>">log in</a>
+        <a class="px-4 py-2 rounded-full bg-black text-white" href="<?= url('register') ?>">register</a>
+      <?php endif; ?>
+    </div>
+  </div>
+</header>
+<main>
+<?php
+$flashView = view('partials/flash.php');
+if (is_file($flashView)) { include $flashView; }
+?>

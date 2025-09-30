@@ -59,19 +59,22 @@ $m = $metrics ?? ['upcoming' => 0, 'vehicles' => 0, 'due' => 0];
               <?= date('Y-m-d • H:i', strtotime($r['scheduled_at'])) ?>
             </div>
           </div>
-          <span class="px-3 py-1 rounded-full text-xs border
-              <?php
-                $cls = [
-                  'PENDING'      => 'border-amber-300 text-amber-700 bg-amber-50',
-                  'APPROVED'     => 'border-blue-300 text-blue-700 bg-blue-50',
-                  'IN_PROGRESS'  => 'border-indigo-300 text-indigo-700 bg-indigo-50',
-                  'WAITING_PARTS'=> 'border-orange-300 text-orange-700 bg-orange-50',
-                  'COMPLETED'    => 'border-emerald-300 text-emerald-700 bg-emerald-50',
-                  'CANCELLED'    => 'border-rose-300 text-rose-700 bg-rose-50',
-                  'REJECTED'     => 'border-gray-300 text-gray-700 bg-gray-50',
-                ];
-                echo $cls[$r['status']] ?? 'border-gray-300 text-gray-700 bg-gray-50';
-              ?>">
+          <?php
+            // Support BOTH older and newer status names
+            $cls = [
+              'PENDING'        => 'border-amber-300 text-amber-700 bg-amber-50',
+              'CONFIRMED'      => 'border-blue-300 text-blue-700 bg-blue-50',
+              'APPROVED'       => 'border-blue-300 text-blue-700 bg-blue-50',
+              'IN_PROGRESS'    => 'border-indigo-300 text-indigo-700 bg-indigo-50',
+              'WAITING_PARTS'  => 'border-orange-300 text-orange-700 bg-orange-50',
+              'DELAYED'        => 'border-orange-300 text-orange-700 bg-orange-50',
+              'COMPLETED'      => 'border-emerald-300 text-emerald-700 bg-emerald-50',
+              'CANCELLED'      => 'border-rose-300 text-rose-700 bg-rose-50',
+              'REJECTED'       => 'border-gray-300 text-gray-700 bg-gray-50',
+            ];
+            $badge = $cls[$r['status']] ?? 'border-gray-300 text-gray-700 bg-gray-50';
+          ?>
+          <span class="px-3 py-1 rounded-full text-xs border <?= $badge ?>">
             <?= $e($r['status']) ?>
           </span>
         </div>

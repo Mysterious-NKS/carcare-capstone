@@ -5,7 +5,7 @@
   <div class="bg-white border rounded-2xl shadow-card p-6">
     <h1 class="text-2xl font-bold mb-4">Book an Appointment</h1>
 
-    <form method="post" action="<?= url('appointments/create') ?>" class="space-y-5">
+    <form method="post" action="<?= url('appointments/create') ?>" class="space-y-5" id="apptFormA">
       <div>
         <label class="text-sm text-gray-600">Vehicle</label>
         <select name="vehicle_id" class="mt-1 w-full border rounded-lg px-3 py-2" required>
@@ -19,13 +19,20 @@
       </div>
 
       <div>
-        <label class="text-sm text-gray-600">Service</label>
-        <select name="service_id" class="mt-1 w-full border rounded-lg px-3 py-2" required>
-          <option value="">— choose —</option>
+        <div class="flex items-center justify-between">
+          <label class="text-sm text-gray-600">Services</label>
+          <span class="text-xs text-gray-500">Tip: hold Ctrl/Cmd to select multiple</span>
+        </div>
+        <select name="service_ids[]" class="mt-1 w-full border rounded-lg px-3 py-2" size="6" multiple required id="svcSelectA">
           <?php foreach ($services as $s): ?>
-            <option value="<?= (int)$s['id'] ?>"><?= $e($s['name']) ?></option>
+            <option value="<?= (int)$s['id'] ?>" data-price="<?= (float)$s['price'] ?>">
+              <?= $e($s['name']) ?> — RM <?= number_format((float)$s['price'], 2) ?>
+            </option>
           <?php endforeach; ?>
         </select>
+        <div class="mt-2 text-sm text-gray-700 hidden" id="totalWrapA">
+          Estimated total: <span class="font-semibold" id="totalA"></span>
+        </div>
       </div>
 
       <?php if (!empty($staff)): ?>
@@ -57,3 +64,31 @@
     </form>
   </div>
 </div>
+
+<script>
+(function() {
+  const fmt = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' });
+  const select = document.getElementById('svcSelectA');
+  const total  = document.getElementById('totalA');
+  const wrap   = document.getElementById('totalWrapA');
+
+  function refresh() {
+    if (!select) return;
+    let sum = 0;
+    Array.from(select.selectedOptions).forEach(opt => {
+      const p = parseFloat(opt.getAttribute('data-price') || '0');
+      if (!Number.isNaN(p)) sum += p;
+    });
+    if (sum > 0) {
+      wrap.classList.remove('hidden');
+      total.textContent = fmt.format(sum);
+    } else {
+      wrap.classList.add('hidden');
+      total.textContent = '';
+    }
+  }
+
+  select && select.addEventListener('change', refresh);
+  refresh();
+})();
+</script>

@@ -31,20 +31,7 @@ class AppointmentController extends Controller
         return (bool)$q->fetchColumn();
     }
 
-    // Render whichever view file exists (new or old paths)
-    private function renderAny(array $candidates, array $data = []): void {
-        $base = dirname(__DIR__).'/views/';
-        foreach ($candidates as $rel) {
-            if (is_file($base.$rel)) {
-                $this->render($rel, $data);
-                return;
-            }
-        }
-        // fallback to first (will error if not present, but keeps behavior consistent)
-        $this->render($candidates[0], $data);
-    }
-
-    /* ---------- actions ---------- */
+    /* ---------- actions (CUSTOMER) ---------- */
 
     // GET /appointments
     public function index()
@@ -53,10 +40,9 @@ class AppointmentController extends Controller
         $uid = Auth::id();
         $pdo = DB::pdo();
 
-        // Build SELECT dynamically so we don't reference missing tables/columns
         $select = "
             SELECT a.id, a.status, a.scheduled_at,
-                   svc.name AS service_name,
+                   svc.name AS service_name, svc.price AS service_price,
                    v.year, v.make, v.model, v.plate_no
         ";
         $joins = "
@@ -65,7 +51,6 @@ class AppointmentController extends Controller
             JOIN vehicles  v   ON v.id   = a.vehicle_id
         ";
 
-        // Optionally join staff or users table for staff name
         if ($this->tableExists($pdo, 'staff') && $this->colExists($pdo, 'appointments', 'staff_id')) {
             $select .= ", s.name AS staff_name";
             $joins  .= " LEFT JOIN staff s ON s.id = a.staff_id ";
@@ -85,7 +70,6 @@ class AppointmentController extends Controller
         $st->execute([$uid]);
         $items = $st->fetchAll(PDO::FETCH_ASSOC);
 
-        // New path first, then legacy
         $this->renderAny(
             ['appointments/index.php', 'customer/appointments.php'],
             ['items' => $items]
@@ -108,9 +92,8 @@ class AppointmentController extends Controller
         $v->execute([$uid]);
         $vehicles = $v->fetchAll(PDO::FETCH_ASSOC);
 
-        $services = $pdo->query("SELECT id, name FROM services ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        $services = $pdo->query("SELECT id, name, price FROM services ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 
-        // Optional staff list (if a suitable table exists)
         $staff = [];
         if ($this->tableExists($pdo, 'staff') && $this->colExists($pdo, 'staff', 'name')) {
             $staff = $pdo->query("SELECT id, name FROM staff ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
@@ -130,7 +113,7 @@ class AppointmentController extends Controller
         );
     }
 
-    // POST /appointments/create
+    // POST /appointments or /appointments/create
     public function store()
     {
         Auth::requireRole('CUSTOMER');
@@ -138,9 +121,24 @@ class AppointmentController extends Controller
         $pdo  = DB::pdo();
 
         $vehicle_id = (int)($_POST['vehicle_id'] ?? 0);
-        $service_id = (int)($_POST['service_id'] ?? 0);
 
-        // accept scheduled_at or (date + time)
+        $serviceIds = [];
+        if (!empty($_POST['service_ids']) && is_array($_POST['service_ids'])) {
+            foreach ($_POST['service_ids'] as $sid) {
+                $sid = (int)$sid;
+                if ($sid > 0) $serviceIds[] = $sid;
+            }
+        } else {
+            $sid = (int)($_POST['service_id'] ?? 0);
+            if ($sid > 0) $serviceIds[] = $sid;
+        }
+
+        $serviceIds = array_values(array_unique($serviceIds));
+        if (count($serviceIds) > 10) {
+            $_SESSION['flash'] = ['err' => 'Please select at most 10 services.'];
+            return $this->redirect('appointments/create');
+        }
+
         $when = trim($_POST['scheduled_at'] ?? '');
         $date = trim($_POST['date'] ?? '');
         $time = trim($_POST['time'] ?? '');
@@ -151,40 +149,65 @@ class AppointmentController extends Controller
         $staff_id = isset($_POST['staff_id']) && $_POST['staff_id'] !== '' ? (int)$_POST['staff_id'] : null;
         $notes    = trim($_POST['notes'] ?? '');
 
-        if ($vehicle_id <= 0 || $service_id <= 0 || $when === '') {
+        if ($vehicle_id <= 0 || empty($serviceIds) || $when === '') {
             $_SESSION['flash'] = ['err' => 'Please fill all required fields.'];
             return $this->redirect('appointments/create');
         }
 
-        // ensure the vehicle belongs to the user
-        $chk = $pdo->prepare("SELECT id FROM vehicles WHERE id = ? AND user_id = ?");
-        $chk->execute([$vehicle_id, $uid]);
-        if (!$chk->fetch()) {
+        $chk = $pdo->prepare("SELECT id, plate_no FROM vehicles WHERE id = ? AND user_id = ?");
+        $chk->execute([$vehicle_id, Auth::id()]);
+        $vehRow = $chk->fetch(PDO::FETCH_ASSOC);
+        if (!$vehRow) {
             $_SESSION['flash'] = ['err' => 'Invalid vehicle selected.'];
             return $this->redirect('appointments/create');
         }
+        $plate = (string)($vehRow['plate_no'] ?? '');
 
-        // portable INSERT (only include cols that exist)
-        $cols  = ['customer_id','vehicle_id','service_id','scheduled_at','status'];
-        $vals  = [$uid, $vehicle_id, $service_id, $when, 'PENDING'];
-        $marks = '?,?,?,?,?';
+        $baseCols  = ['customer_id','vehicle_id','service_id','scheduled_at','status'];
+        $baseMarks = '?,?,?,?,?';
 
-        if ($this->colExists($pdo, 'appointments', 'staff_id') && $staff_id) {
-            $cols[]  = 'staff_id';
-            $vals[]  = $staff_id;
-            $marks  .= ',?';
+        $created = 0;
+        $pdo->beginTransaction();
+        try {
+            foreach ($serviceIds as $service_id) {
+                $cols  = $baseCols;
+                $vals  = [Auth::id(), $vehicle_id, $service_id, $when, 'PENDING'];
+                $marks = $baseMarks;
+
+                if ($this->colExists($pdo, 'appointments', 'staff_id') && $staff_id) {
+                    $cols[]  = 'staff_id';
+                    $vals[]  = $staff_id;
+                    $marks  .= ',?';
+                }
+                if ($this->colExists($pdo, 'appointments', 'notes') && $notes !== '') {
+                    $cols[]  = 'notes';
+                    $vals[]  = $notes;
+                    $marks  .= ',?';
+                } elseif ($this->colExists($pdo, 'appointments', 'remarks') && $notes !== '') {
+                    $cols[]  = 'remarks';
+                    $vals[]  = $notes;
+                    $marks  .= ',?';
+                }
+
+                $sql = "INSERT INTO appointments (".implode(',', $cols).") VALUES ($marks)";
+                $pdo->prepare($sql)->execute($vals);
+                $created++;
+            }
+
+            $pdo->commit();
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            $_SESSION['flash'] = ['err' => 'Could not create appointment(s).'];
+            return $this->redirect('appointments/create');
         }
-        if ($this->colExists($pdo, 'appointments', 'notes') && $notes !== '') {
-            $cols[]  = 'notes';
-            $vals[]  = $notes;
-            $marks  .= ',?';
+
+        if ($created > 0) {
+            $title = 'Booking submitted';
+            $body  = "We received $created appointment".($created>1?'s':'')." for vehicle $plate.\nScheduled for: $when.";
+            $this->notifyUser(Auth::id(), $title, $body);
         }
 
-        $sql = "INSERT INTO appointments (".implode(',', $cols).") VALUES ($marks)";
-        $st  = $pdo->prepare($sql);
-        $st->execute($vals);
-
-        $_SESSION['flash'] = ['ok' => 'Appointment created.'];
+        $_SESSION['flash'] = ['ok' => $created.' appointment(s) created.'];
         return $this->redirect('appointments');
     }
 
@@ -198,7 +221,7 @@ class AppointmentController extends Controller
 
         $select = "
             SELECT a.id, a.status, a.scheduled_at,
-                   svc.name AS service_name,
+                   svc.name AS service_name, svc.price AS service_price,
                    v.make, v.model, v.year, v.plate_no
         ";
         $joins = "
@@ -234,6 +257,13 @@ class AppointmentController extends Controller
         );
     }
 
+    public function view() { return $this->show(); }
+
+    public function showById($id) {
+        $_GET['id'] = (int)$id;
+        return $this->show();
+    }
+
     // POST /appointments/cancel
     public function cancel()
     {
@@ -245,7 +275,149 @@ class AppointmentController extends Controller
         if ($id > 0) {
             $st = $pdo->prepare("UPDATE appointments SET status='CANCELLED' WHERE id=? AND customer_id=?");
             $st->execute([$id, $uid]);
+
+            if ($st->rowCount() > 0) {
+                $this->notifyUser($uid, 'Booking cancelled', "Your appointment #$id has been cancelled.");
+            }
         }
         $this->redirect('appointments');
+    }
+
+    public function rescheduleForm($id)
+    {
+        Auth::requireRole('CUSTOMER');
+        $uid = Auth::id();
+        $pdo = DB::pdo();
+
+        $sql = "SELECT a.id, a.customer_id, a.scheduled_at, a.status,
+                       s.name AS service_name,
+                       v.year, v.make, v.model, v.plate_no
+                FROM appointments a
+                JOIN services s ON s.id=a.service_id
+                JOIN vehicles v ON v.id=a.vehicle_id
+                WHERE a.id=? AND a.customer_id=?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([(int)$id, $uid]);
+        $item = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$item) return $this->redirect('appointments');
+
+        $this->render('appointments/reschedule.php', ['a' => $item]);
+    }
+
+    public function rescheduleSave($id)
+    {
+        Auth::requireRole('CUSTOMER');
+        $uid  = Auth::id();
+        $date = trim($_POST['date'] ?? '');
+        $time = trim($_POST['time'] ?? '');
+        $when = trim($_POST['scheduled_at'] ?? '');
+
+        if ($when === '' && $date !== '' && $time !== '') {
+            $when = "$date $time:00";
+        }
+        if ($when === '') {
+            $_SESSION['flash'] = ['err' => 'Please choose a new date & time.'];
+            return $this->redirect("appointments/$id/reschedule");
+        }
+
+        $pdo = DB::pdo();
+        $chk = $pdo->prepare("SELECT id FROM appointments WHERE id=? AND customer_id=?");
+        $chk->execute([(int)$id, $uid]);
+        if (!$chk->fetch()) return $this->redirect('appointments');
+
+        $up = $pdo->prepare("UPDATE appointments SET scheduled_at=?, status='PENDING' WHERE id=?");
+        $up->execute([$when, (int)$id]);
+
+        $this->notifyUser($uid, 'Appointment rescheduled', "Appointment #$id moved to: $when.");
+
+        $_SESSION['flash'] = ['ok' => 'Appointment rescheduled.'];
+        return $this->redirect("appointments/$id");
+    }
+
+    private function notifyUser(int $userId, string $title, string $body): void {
+        $pdo = DB::pdo();
+        $chk = $pdo->prepare("SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='notifications' LIMIT 1");
+        $chk->execute();
+        if (!$chk->fetchColumn()) return;
+
+        $st = $pdo->prepare("INSERT INTO notifications (user_id, type, title, body, is_read, created_at)
+                             VALUES (?,?,?,?,0,NOW())");
+        $st->execute([$userId, 'IN_APP', $title, $body]);
+    }
+
+    /* =========================
+       STAFF-ONLY actions (NEW)
+       ========================= */
+
+    // POST /appointments/{id}/status
+    public function updateStatus($id)
+    {
+        Auth::requireRole('STAFF');
+        $pdo = DB::pdo();
+        $aid = (int)$id;
+
+        // ensure appointment exists (+ belongs to this staff if staff_id column exists)
+        $st = $this->colExists($pdo, 'appointments', 'staff_id')
+            ? $pdo->prepare("SELECT customer_id, staff_id FROM appointments WHERE id=?")
+            : $pdo->prepare("SELECT customer_id, NULL AS staff_id FROM appointments WHERE id=?");
+        $st->execute([$aid]);
+        $row = $st->fetch(PDO::FETCH_ASSOC);
+        if (!$row) return $this->redirect('staff/schedule');
+
+        if ($this->colExists($pdo, 'appointments', 'staff_id') && (int)$row['staff_id'] !== (int)Auth::id()) {
+            $_SESSION['flash'] = ['err' => 'You are not assigned to this appointment.'];
+            return $this->redirect('staff/schedule');
+        }
+
+        $status  = strtoupper(trim($_POST['status'] ?? ''));
+        $allowed = ['PENDING','CONFIRMED','IN_PROGRESS','COMPLETED','DELAYED','CANCELLED','APPROVED'];
+        if (!in_array($status, $allowed, true)) {
+            $_SESSION['flash'] = ['err' => 'Invalid status.'];
+            return $this->redirect('staff/schedule');
+        }
+
+        $pdo->prepare("UPDATE appointments SET status=? WHERE id=?")->execute([$status, $aid]);
+
+        $cust = (int)($row['customer_id'] ?? 0);
+        if ($cust) $this->notifyUser($cust, 'Appointment update', "Your appointment #$aid is now: $status.");
+
+        $_SESSION['flash'] = ['ok' => 'Status updated.'];
+        // *** Redirect back to Workflow, keeping the same selection ***
+        return $this->redirect('staff/workflow?appointment_id='.$aid);
+    }
+
+    // POST /appointments/{id}/staff-reschedule
+    public function staffRescheduleSave($id)
+    {
+        Auth::requireRole('STAFF');
+        $pdo = DB::pdo();
+        $aid = (int)$id;
+
+        $st = $pdo->prepare("SELECT customer_id, staff_id FROM appointments WHERE id=?");
+        $st->execute([$aid]);
+        $row = $st->fetch(PDO::FETCH_ASSOC);
+        if (!$row || ($this->colExists($pdo,'appointments','staff_id') && (int)$row['staff_id'] !== (int)Auth::id())) {
+            $_SESSION['flash'] = ['err' => 'You are not assigned to this appointment.'];
+            return $this->redirect('staff/schedule');
+        }
+
+        $date = trim($_POST['date'] ?? '');
+        $time = trim($_POST['time'] ?? '');
+        $when = trim($_POST['scheduled_at'] ?? '');
+        if ($when === '' && $date !== '' && $time !== '') $when = "$date $time:00";
+        if ($when === '') {
+            $_SESSION['flash'] = ['err' => 'Please provide the new date & time.'];
+            return $this->redirect('staff/schedule');
+        }
+
+        $pdo->prepare("UPDATE appointments SET scheduled_at=?, status='CONFIRMED' WHERE id=?")
+            ->execute([$when, $aid]);
+
+        $cust = (int)($row['customer_id'] ?? 0);
+        if ($cust) $this->notifyUser($cust, 'Appointment rescheduled', "Your appointment #$aid is moved to: $when.");
+
+        $_SESSION['flash'] = ['ok' => 'Appointment rescheduled.'];
+        // *** Redirect back to Workflow, keeping the same selection ***
+        return $this->redirect('staff/workflow?appointment_id='.$aid);
     }
 }

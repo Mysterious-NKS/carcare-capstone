@@ -6,6 +6,9 @@
     <div class="flex items-start justify-between">
       <div>
         <h1 class="text-2xl font-extrabold mb-1"><?= $e($a['service_name']) ?></h1>
+        <div class="text-xs text-gray-500 mb-2">
+          Price: RM <?= number_format((float)($a['service_price'] ?? 0), 2) ?>
+        </div>
         <div class="text-gray-600">
           <?= $e($a['year'].' '.$a['make'].' '.$a['model']) ?> • Plate <?= $e($a['plate_no']) ?>
         </div>
@@ -39,14 +42,19 @@
     </div>
 
     <?php if (in_array($a['status'], ['PENDING','APPROVED'], true)): ?>
-      <form method="post"
-            action="<?= url('appointments/cancel?id='.(int)$a['id']) ?>"
-            class="mt-8"
-            onsubmit="return confirm('Cancel this appointment?');">
-        <button class="px-4 py-2 rounded-full border text-rose-700 hover:bg-rose-50">
-          Cancel Appointment
-        </button>
-      </form>
+      <div class="mt-8 flex gap-3">
+        <a href="<?= url('appointments/'.$a['id'].'/reschedule') ?>"
+           class="px-4 py-2 rounded-full border hover:bg-gray-50">Reschedule</a>
+
+        <form method="post"
+              action="<?= url('appointments/cancel') ?>"
+              onsubmit="return confirm('Cancel this appointment?');">
+          <input type="hidden" name="id" value="<?= (int)$a['id'] ?>">
+          <button class="px-4 py-2 rounded-full border text-rose-700 hover:bg-rose-50">
+            Cancel Appointment
+          </button>
+        </form>
+      </div>
     <?php endif; ?>
   </div>
 </div>

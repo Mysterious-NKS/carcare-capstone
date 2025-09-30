@@ -1,0 +1,195 @@
+/* ===========================
+   Base feel (kept & polished)
+   =========================== */
+:root{
+  --brand:#0f172a;          /* slate-900 */
+  --accent:#111827;         /* gray-900 */
+  --muted:#6b7280;          /* gray-500 */
+  --ring:#e5e7eb;           /* gray-200 */
+  --card:#ffffff;
+  --cardHover:#fbfbfb;
+  --shadow:0 8px 24px rgba(0,0,0,.06);
+  --pill:9999px;
+}
+
+/* Flash toasts */
+.flash { border-bottom:1px solid var(--ring); }
+.flash-ok{ background:#f0fdf4; color:#166534; border-color:#bbf7d0; }
+.flash-err{ background:#fef2f2; color:#991b1b; border-color:#fecaca; }
+
+/* ======================
+   Staff tabs (unchanged)
+   ====================== */
+.staff-tabs{
+  display:flex; gap:.75rem; border-bottom:1px solid var(--ring); padding-bottom:.75rem;
+}
+.staff-tab{
+  display:inline-flex; align-items:center; gap:.5rem;
+  padding:.5rem .75rem; border-radius:9999px; border:1px solid transparent; color:#374151;
+  transition:background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.staff-tab.tab-active{ background:#111827; color:#fff; }
+.staff-tab.tab-idle:hover{ background:#f9fafb; border-color:var(--ring); }
+.staff-tab:focus-visible{ outline:2px solid #111827; outline-offset:2px; }
+
+/* ==========
+   Cards
+   ========== */
+.shadow-card{ box-shadow: var(--shadow); }
+.card{
+  background:var(--card); border:1px solid var(--ring); border-radius:1rem;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .06s ease;
+}
+.card:hover{ background:var(--cardHover); }
+
+/* Card section headings (optional helper, non-breaking) */
+.card .card-title,
+.card .font-semibold.mb-3{
+  display:flex; align-items:center; gap:.5rem;
+}
+
+/* ==========
+   Buttons
+   ========== */
+.btn{
+  display:inline-flex; align-items:center; gap:.5rem;
+  padding:.5rem .9rem; border-radius:9999px; border:1px solid var(--ring);
+  transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.btn:hover{ background:#f9fafb; }
+.btn:focus-visible{ outline:2px solid #111827; outline-offset:2px; }
+.btn-primary{ background:#000; color:#fff; border-color:#000; }
+.btn-primary:hover{ filter:brightness(.95); }
+.btn-soft{ background:#fff; color:#111827; border-color:#e5e7eb; }
+.btn-soft:hover{ background:#f9fafb; }
+.btn-danger{ background:#fef2f2; color:#991b1b; border-color:#fecaca; }
+.btn-danger:hover{ background:#fee2e2; }
+
+/* Tiny badges */
+.badge{
+  font-size:.75rem; padding:.2rem .5rem; border-radius:9999px;
+  border:1px solid var(--ring); color:#374151; background:#fff;
+}
+
+/* =================
+   Status chips (as-is)
+   ================= */
+.status-pill {
+  border-radius: var(--pill); padding:2px 10px; font-size:12px;
+  border:1px solid #e5e7eb; display:inline-block; font-weight:600;
+}
+.status-PENDING     { background:#fff7ed; color:#9a3412; border-color:#fed7aa; }
+.status-CONFIRMED   { background:#f0f9ff; color:#075985; border-color:#bae6fd; }
+.status-IN_PROGRESS { background:#ecfeff; color:#155e75; border-color:#a5f3fc; }
+.status-COMPLETED   { background:#ecfdf5; color:#065f46; border-color:#a7f3d0; }
+.status-DELAYED     { background:#fefce8; color:#854d0e; border-color:#fde68a; }
+.status-CANCELLED   { background:#fef2f2; color:#991b1b; border-color:#fecaca; }
+
+/* ===========================
+   Legacy dark panel (untouched)
+   =========================== */
+.panel-dark{ background:#111827; color:#fff; border-radius:1rem; border:1px solid #0b1220; }
+.panel-dark input, .panel-dark textarea, .panel-dark select{
+  background:#1f2937; border:1px solid #374151; color:#fff; border-radius:.5rem; padding:.5rem .75rem; width:100%;
+}
+.panel-dark .btn{ background:#1f2937; color:#fff; border-color:#374151; }
+.panel-dark .btn:hover{ background:#111827; }
+
+/* =========================================
+   Segmented radio (crisp dot, no blurry halo)
+   ========================================= */
+.segmented{ display:flex; flex-wrap:wrap; gap:.5rem; }
+.segmented-item{
+  display:inline-flex; align-items:center; gap:.5rem;
+  border:1px solid var(--ring); border-radius:9999px; padding:.35rem .8rem;
+  background:#fff; color:#111827; cursor:pointer; user-select:none;
+  transition: background .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.segmented-item:hover{ background:#f9fafb; border-color:#d1d5db; }
+.segmented-item span{ font-size:12px; letter-spacing:.2px; font-weight:600; }
+
+/* Radio visuals */
+.segmented-item input{
+  appearance:none; -webkit-appearance:none; width:16px; height:16px;
+  border:2px solid #9ca3af; border-radius:9999px; display:inline-block; position:relative;
+  background:#fff; outline:none;
+  transition:border-color .12s ease;
+}
+.segmented-item input::after{
+  content:""; position:absolute; inset:3px;
+  background:#111827; border-radius:inherit; transform:scale(0);
+  transition: transform .12s ease;
+}
+.segmented-item input:checked{ border-color:#111827; }
+.segmented-item input:checked::after{ transform:scale(1); }
+
+/* Icon color helpers (kept) */
+.i-green{ color:#16a34a; } .i-yellow{ color:#f59e0b; } .i-red{ color:#ef4444; } .i-blue{ color:#0ea5e9; }
+
+/* =========================
+   Notifications header polish
+   ========================= */
+.notif-bell { position: relative; }
+.notif-bell:focus-visible { outline: 2px solid #111827; outline-offset: 2px; border-radius: 9999px; }
+.notif-badge{
+  position:absolute; top:-6px; right:-6px;
+  min-width:18px; height:18px; padding:0 4px;
+  border-radius:9999px;
+  background:#e11d48; color:#fff;
+  font-size:10px; line-height:18px; text-align:center;
+  border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 1px 2px rgba(0,0,0,.08);
+}
+
+/* Normalize inline icons */
+svg.h-6.w-6, svg.h-5.w-5, svg.h-4.w-4 { display:inline-block; vertical-align:middle; }
+
+/* =========================
+   Non-breaking UX niceties
+   ========================= */
+
+/* Row hover (applies only to rows with border + rounded) */
+.border.rounded-xl:hover{
+  border-color:#d1d5db;
+  background:#fcfcfc;
+  transition:background .15s ease, border-color .15s ease;
+}
+
+/* Subtle focus for all inputs/selects/textarea without changing sizes */
+input[type="text"], input[type="time"], input[type="date"], input[type="number"],
+input[type="email"], input[type="password"], select, textarea {
+  outline:none;
+}
+input[type="text"]:focus, input[type="time"]:focus, input[type="date"]:focus, input[type="number"]:focus,
+input[type="email"]:focus, input[type="password"]:focus, select:focus, textarea:focus {
+  box-shadow:0 0 0 3px rgba(17,24,39,.08);
+  border-color:#cbd5e1;
+}
+
+/* Empty state helper (optional) */
+.empty-state{
+  color:#6b7280; background:#f9fafb; border:1px dashed #e5e7eb; border-radius:1rem;
+  padding:1rem 1.25rem;
+}
+
+/* ===================
+   Skeleton placeholders
+   =================== */
+.skeleton{
+  position:relative; overflow:hidden; background:#f3f4f6; border-radius:.5rem;
+}
+.skeleton::after{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.6) 45%, rgba(255,255,255,0) 80%);
+  transform:translateX(-100%); animation:skeleton-sheen 1.2s infinite;
+}
+@keyframes skeleton-sheen{ to{ transform:translateX(100%); } }
+.skeleton-line{ height:12px; margin:8px 0; }
+.skeleton-pill{ height:22px; width:96px; border-radius:9999px; }
+.skeleton-thumb{ height:72px; border-radius:.75rem; }
+
+/* Prefer-reduced-motion: tone down animations */
+@media (prefers-reduced-motion: reduce){
+  .card, .btn, .staff-tab, .segmented-item, .border.rounded-xl:hover { transition:none !important; }
+  .skeleton::after{ animation:none; }
+}
