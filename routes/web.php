@@ -30,6 +30,11 @@ $router->post('/customer/vehicles',        [VehicleController::class, 'store']);
 $router->get('/customer/vehicles/edit',    [VehicleController::class, 'edit']);    // ?id=123
 $router->post('/customer/vehicles/edit',   [VehicleController::class, 'update']);  // ?id=123
 $router->post('/customer/vehicles/delete', [VehicleController::class, 'destroy']); // ?id=123
+// Appointments (Customer)
+$router->get('/appointments',         [AppointmentController::class, 'index']);
+$router->get('/appointments/create',  [AppointmentController::class, 'create']);
+$router->post('/appointments/create', [AppointmentController::class, 'store']);
+$router->get('/appointments/show',    [AppointmentController::class, 'show']);     // ?id=123
+$router->post('/appointments/cancel', [AppointmentController::class, 'cancel']);
 
-$router->get('/appointments/view',   [AppointmentController::class, 'show']);   // ?id=123
-$router->post('/appointments/cancel',[AppointmentController::class, 'cancel']); // ?id=123
+
