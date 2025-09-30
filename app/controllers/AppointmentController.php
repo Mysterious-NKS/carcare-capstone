@@ -33,6 +33,8 @@ class AppointmentController extends Controller
 
     /* ---------- actions (CUSTOMER) ---------- */
 
+    // ...file header stays the same...
+
     // GET /appointments
     public function index()
     {
@@ -40,6 +42,24 @@ class AppointmentController extends Controller
         $uid = Auth::id();
         $pdo = DB::pdo();
 
+        // --------- incoming filters (GET) ----------
+        $q       = trim($_GET['q'] ?? '');
+        $sort    = trim($_GET['sort'] ?? 'new');              // new|old|status|service
+        $statusG = $_GET['status'] ?? [];                     // array from checkboxes
+        if (!is_array($statusG)) {                            // if a single value came through
+            $statusG = $statusG !== '' ? [$statusG] : [];
+        }
+        // Whitelist of allowed statuses we actually display
+        $allowedStatuses = [
+            'PENDING','APPROVED','CONFIRMED','IN_PROGRESS','WAITING_PARTS',
+            'DELAYED','COMPLETED','CANCELLED'
+        ];
+        $statuses = array_values(array_intersect(
+            array_map('strtoupper', $statusG),
+            $allowedStatuses
+        ));
+
+        // --------- base select ----------
         $select = "
             SELECT a.id, a.status, a.scheduled_at,
                    svc.name AS service_name, svc.price AS service_price,
@@ -65,16 +85,51 @@ class AppointmentController extends Controller
             $select .= ", '' AS staff_name";
         }
 
-        $sql = $select.$joins." WHERE a.customer_id = ? ORDER BY a.scheduled_at DESC";
+        // --------- where building ----------
+        $where  = ["a.customer_id = ?"];
+        $params = [$uid];
+
+        if ($q !== '') {
+            // search in service name, vehicle make/model/plate
+            $where[] = "(svc.name LIKE ? OR v.make LIKE ? OR v.model LIKE ? OR v.plate_no LIKE ?)";
+            $like = "%$q%";
+            array_push($params, $like, $like, $like, $like);
+        }
+
+        if (!empty($statuses)) {
+            // build "IN (?,?,?)" safely
+            $ph = implode(',', array_fill(0, count($statuses), '?'));
+            $where[] = "a.status IN ($ph)";
+            foreach ($statuses as $s) $params[] = $s;
+        }
+
+        $order = "a.scheduled_at DESC";
+        switch (strtolower($sort)) {
+            case 'old':    $order = "a.scheduled_at ASC"; break;
+            case 'status': $order = "FIELD(a.status,'PENDING','APPROVED','CONFIRMED','IN_PROGRESS','WAITING_PARTS','DELAYED','COMPLETED','CANCELLED'), a.scheduled_at DESC"; break;
+            case 'service':$order = "svc.name ASC, a.scheduled_at DESC"; break;
+            default:       $order = "a.scheduled_at DESC";
+        }
+
+        $sql = $select.$joins." WHERE ".implode(' AND ', $where)." ORDER BY $order";
         $st  = $pdo->prepare($sql);
-        $st->execute([$uid]);
+        $st->execute($params);
         $items = $st->fetchAll(PDO::FETCH_ASSOC);
 
         $this->renderAny(
             ['appointments/index.php', 'customer/appointments.php'],
-            ['items' => $items]
+            [
+                'items'    => $items,
+                'q'        => $q,
+                'sort'     => $sort,
+                'statuses' => $statuses,
+                'allowedStatuses' => $allowedStatuses
+            ]
         );
     }
+
+// ...rest of controller unchanged...
+
 
     // GET /appointments/create
     public function create()
@@ -179,11 +234,7 @@ class AppointmentController extends Controller
                     $vals[]  = $staff_id;
                     $marks  .= ',?';
                 }
-                if ($this->colExists($pdo, 'appointments', 'notes') && $notes !== '') {
-                    $cols[]  = 'notes';
-                    $vals[]  = $notes;
-                    $marks  .= ',?';
-                } elseif ($this->colExists($pdo, 'appointments', 'remarks') && $notes !== '') {
+                if ($this->colExists($pdo, 'appointments', 'remarks') && $notes !== '') {
                     $cols[]  = 'remarks';
                     $vals[]  = $notes;
                     $marks  .= ',?';
@@ -220,8 +271,8 @@ class AppointmentController extends Controller
         $id  = (int)($_GET['id'] ?? 0);
 
         $select = "
-            SELECT a.id, a.status, a.scheduled_at,
-                   svc.name AS service_name, svc.price AS service_price,
+            SELECT a.id, a.status, a.scheduled_at, a.remarks,
+                   svc.name AS service_name, svc.price AS service_price, svc.est_hours,
                    v.make, v.model, v.year, v.plate_no
         ";
         $joins = "
@@ -251,9 +302,25 @@ class AppointmentController extends Controller
 
         if (!$a) return $this->redirect('appointments');
 
+        // Pull service record (if exists) for the detailed panel
+        $record = null;
+        if ($this->tableExists($pdo, 'service_records')) {
+            $rs = $pdo->prepare("SELECT * FROM service_records WHERE appointment_id=? LIMIT 1");
+            $rs->execute([$id]);
+            $record = $rs->fetch(PDO::FETCH_ASSOC) ?: null;
+
+            if ($record && !empty($record['photos'])) {
+                // decode json safely
+                $decoded = json_decode($record['photos'], true);
+                $record['photos'] = is_array($decoded) ? $decoded : [];
+            } else {
+                $record['photos'] = [];
+            }
+        }
+
         $this->renderAny(
             ['appointments/show.php', 'customer/appointment_show.php'],
-            ['a' => $a]
+            ['a' => $a, 'record' => $record]
         );
     }
 
@@ -346,17 +413,15 @@ class AppointmentController extends Controller
     }
 
     /* =========================
-       STAFF-ONLY actions (NEW)
+       STAFF-ONLY actions (unchanged)
        ========================= */
 
-    // POST /appointments/{id}/status
     public function updateStatus($id)
     {
         Auth::requireRole('STAFF');
         $pdo = DB::pdo();
         $aid = (int)$id;
 
-        // ensure appointment exists (+ belongs to this staff if staff_id column exists)
         $st = $this->colExists($pdo, 'appointments', 'staff_id')
             ? $pdo->prepare("SELECT customer_id, staff_id FROM appointments WHERE id=?")
             : $pdo->prepare("SELECT customer_id, NULL AS staff_id FROM appointments WHERE id=?");
@@ -382,11 +447,9 @@ class AppointmentController extends Controller
         if ($cust) $this->notifyUser($cust, 'Appointment update', "Your appointment #$aid is now: $status.");
 
         $_SESSION['flash'] = ['ok' => 'Status updated.'];
-        // *** Redirect back to Workflow, keeping the same selection ***
         return $this->redirect('staff/workflow?appointment_id='.$aid);
     }
 
-    // POST /appointments/{id}/staff-reschedule
     public function staffRescheduleSave($id)
     {
         Auth::requireRole('STAFF');
@@ -417,7 +480,6 @@ class AppointmentController extends Controller
         if ($cust) $this->notifyUser($cust, 'Appointment rescheduled', "Your appointment #$aid is moved to: $when.");
 
         $_SESSION['flash'] = ['ok' => 'Appointment rescheduled.'];
-        // *** Redirect back to Workflow, keeping the same selection ***
         return $this->redirect('staff/workflow?appointment_id='.$aid);
     }
 }

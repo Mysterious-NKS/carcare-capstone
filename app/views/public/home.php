@@ -2,6 +2,11 @@
 // Static homepage mirroring Figma.
 // Hero uses the same Unsplash supercar as before.
 // Featured services use your local images in /public/assets/img/services/.
+
+// Robust "logged in" check (works whether Auth::check() exists or not)
+$isLoggedIn = class_exists('Auth')
+  ? (method_exists('Auth','check') ? Auth::check() : (Auth::id() ? true : false))
+  : false;
 ?>
 <div class="max-w-7xl mx-auto px-4">
 
@@ -58,6 +63,7 @@
         We embrace quality, minimalism and comfort.
       </p>
 
+      <?php if (!$isLoggedIn): ?>
       <div class="mt-6">
         <a href="<?= url('register') ?>"
            class="inline-flex items-center gap-2 px-5 h-11 rounded-full bg-white text-black hover:shadow-md">
@@ -65,96 +71,97 @@
           <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M7 5l5 5-5 5"/></svg>
         </a>
       </div>
+      <?php endif; ?>
     </div>
   </section>
 
   <!-- Featured services -->
-<section id="services" class="py-14 md:py-16">
-  <h3 class="text-3xl md:text-4xl font-bold mb-8">featured services</h3>
+  <section id="services" class="py-14 md:py-16">
+    <h3 class="text-3xl md:text-4xl font-bold mb-8">featured services</h3>
 
-  <div class="grid md:grid-cols-3 gap-6">
+    <div class="grid md:grid-cols-3 gap-6">
 
-    <!-- 1 Engine Diagnostics -->
-    <article class="bg-white border rounded-2xl shadow-card overflow-hidden">
-      <img src="<?= url('assets/img/services/engine-diagnostics.jpg') ?>" alt="Engine diagnostics in bay"
-           class="w-full h-48 object-cover" />
-      <div class="p-5">
-        <h4 class="font-semibold">Engine Diagnostics</h4>
-        <p class="text-sm text-gray-600 mt-2">Identify and fix performance issues using diagnostic tools.</p>
-        <a href="<?= url('appointments/create') ?>" class="inline-block mt-3 text-sm font-medium underline">
-          Book appointment
-        </a>
-      </div>
-    </article>
+      <!-- 1 Engine Diagnostics -->
+      <article class="bg-white border rounded-2xl shadow-card overflow-hidden">
+        <img src="<?= url('assets/img/services/engine-diagnostics.jpg') ?>" alt="Engine diagnostics in bay"
+             class="w-full h-48 object-cover" />
+        <div class="p-5">
+          <h4 class="font-semibold">Engine Diagnostics</h4>
+          <p class="text-sm text-gray-600 mt-2">Identify and fix performance issues using diagnostic tools.</p>
+          <a href="<?= url('appointments/create') ?>" class="inline-block mt-3 text-sm font-medium underline">
+            Book appointment
+          </a>
+        </div>
+      </article>
 
-    <!-- 2 Brake Inspection & Replacement -->
-    <article class="bg-white border rounded-2xl shadow-card overflow-hidden">
-      <img src="<?= url('assets/img/services/brake-inspection.avif') ?>" alt="Brake inspection close-up"
-           class="w-full h-48 object-cover" />
-      <div class="p-5">
-        <h4 class="font-semibold">Brake Inspection &amp; Replacement</h4>
-        <p class="text-sm text-gray-600 mt-2">Safety check and replacement of brake pads/discs if needed.</p>
-        <a href="<?= url('appointments/create') ?>" class="inline-block mt-3 text-sm font-medium underline">
-          Book appointment
-        </a>
-      </div>
-    </article>
+      <!-- 2 Brake Inspection & Replacement -->
+      <article class="bg-white border rounded-2xl shadow-card overflow-hidden">
+        <img src="<?= url('assets/img/services/brake-inspection.avif') ?>" alt="Brake inspection close-up"
+             class="w-full h-48 object-cover" />
+        <div class="p-5">
+          <h4 class="font-semibold">Brake Inspection &amp; Replacement</h4>
+          <p class="text-sm text-gray-600 mt-2">Safety check and replacement of brake pads/discs if needed.</p>
+          <a href="<?= url('appointments/create') ?>" class="inline-block mt-3 text-sm font-medium underline">
+            Book appointment
+          </a>
+        </div>
+      </article>
 
-    <!-- 3 Transmission Service -->
-    <article class="bg-white border rounded-2xl shadow-card overflow-hidden">
-      <img src="<?= url('assets/img/services/transmission-service.jpg') ?>" alt="Manual transmission components"
-           class="w-full h-48 object-cover" />
-      <div class="p-5">
-        <h4 class="font-semibold">Transmission Service</h4>
-        <p class="text-sm text-gray-600 mt-2">Fluid replacement and system check for smooth gear shifting.</p>
-        <a href="<?= url('appointments/create') ?>" class="inline-block mt-3 text-sm font-medium underline">
-          Book appointment
-        </a>
-      </div>
-    </article>
+      <!-- 3 Transmission Service -->
+      <article class="bg-white border rounded-2xl shadow-card overflow-hidden">
+        <img src="<?= url('assets/img/services/transmission-service.jpg') ?>" alt="Manual transmission components"
+             class="w-full h-48 object-cover" />
+        <div class="p-5">
+          <h4 class="font-semibold">Transmission Service</h4>
+          <p class="text-sm text-gray-600 mt-2">Fluid replacement and system check for smooth gear shifting.</p>
+          <a href="<?= url('appointments/create') ?>" class="inline-block mt-3 text-sm font-medium underline">
+            Book appointment
+          </a>
+        </div>
+      </article>
 
-    <!-- 4 Oil Change -->
-    <article class="bg-white border rounded-2xl shadow-card overflow-hidden">
-      <img src="<?= url('assets/img/services/oil-change.jpg') ?>" alt="Pouring engine oil with funnel"
-           class="w-full h-48 object-cover" />
-      <div class="p-5">
-        <h4 class="font-semibold">Oil Change Service</h4>
-        <p class="text-sm text-gray-600 mt-2">Replacement of engine oil and filter to ensure smooth engine operation.</p>
-        <a href="<?= url('appointments/create') ?>" class="inline-block mt-3 text-sm font-medium underline">
-          Book appointment
-        </a>
-      </div>
-    </article>
+      <!-- 4 Oil Change -->
+      <article class="bg-white border rounded-2xl shadow-card overflow-hidden">
+        <img src="<?= url('assets/img/services/oil-change.jpg') ?>" alt="Pouring engine oil with funnel"
+             class="w-full h-48 object-cover" />
+        <div class="p-5">
+          <h4 class="font-semibold">Oil Change Service</h4>
+          <p class="text-sm text-gray-600 mt-2">Replacement of engine oil and filter to ensure smooth engine operation.</p>
+          <a href="<?= url('appointments/create') ?>" class="inline-block mt-3 text-sm font-medium underline">
+            Book appointment
+          </a>
+        </div>
+      </article>
 
-    <!-- 5 Battery Testing -->
-    <article class="bg-white border rounded-2xl shadow-card overflow-hidden">
-      <img src="<?= url('assets/img/services/battery-testing.jpg') ?>" alt="Installing / testing a car battery"
-           class="w-full h-48 object-cover" />
-      <div class="p-5">
-        <h4 class="font-semibold">Battery Testing &amp; Replacement</h4>
-        <p class="text-sm text-gray-600 mt-2">Ensure reliable vehicle starting power.</p>
-        <a href="<?= url('appointments/create') ?>" class="inline-block mt-3 text-sm font-medium underline">
-          Book appointment
-        </a>
-      </div>
-    </article>
+      <!-- 5 Battery Testing -->
+      <article class="bg-white border rounded-2xl shadow-card overflow-hidden">
+        <img src="<?= url('assets/img/services/battery-testing.jpg') ?>" alt="Installing / testing a car battery"
+             class="w-full h-48 object-cover" />
+        <div class="p-5">
+          <h4 class="font-semibold">Battery Testing &amp; Replacement</h4>
+          <p class="text-sm text-gray-600 mt-2">Ensure reliable vehicle starting power.</p>
+          <a href="<?= url('appointments/create') ?>" class="inline-block mt-3 text-sm font-medium underline">
+            Book appointment
+          </a>
+        </div>
+      </article>
 
-    <!-- 6 Tire Rotation -->
-    <article class="bg-white border rounded-2xl shadow-card overflow-hidden">
-      <img src="<?= url('assets/img/services/tire-rotation.jpg') ?>" alt="Tire mounting and balancing"
-           class="w-full h-48 object-cover" />
-      <div class="p-5">
-        <h4 class="font-semibold">Tire Rotation &amp; Balancing</h4>
-        <p class="text-sm text-gray-600 mt-2">Improve tire lifespan and ensure even wear.</p>
-        <a href="<?= url('appointments/create') ?>" class="inline-block mt-3 text-sm font-medium underline">
-          Book appointment
-        </a>
-      </div>
-    </article>
+      <!-- 6 Tire Rotation -->
+      <article class="bg-white border rounded-2xl shadow-card overflow-hidden">
+        <img src="<?= url('assets/img/services/tire-rotation.jpg') ?>" alt="Tire mounting and balancing"
+             class="w-full h-48 object-cover" />
+        <div class="p-5">
+          <h4 class="font-semibold">Tire Rotation &amp; Balancing</h4>
+          <p class="text-sm text-gray-600 mt-2">Improve tire lifespan and ensure even wear.</p>
+          <a href="<?= url('appointments/create') ?>" class="inline-block mt-3 text-sm font-medium underline">
+            Book appointment
+          </a>
+        </div>
+      </article>
 
-  </div>
+    </div>
 
-  <p class="text-gray-600 mt-6">… and more. Just name it and we’ll do it for you.</p>
-</section>
+    <p class="text-gray-600 mt-6">… and more. Just name it and we’ll do it for you.</p>
+  </section>
 
 </div>

@@ -49,10 +49,14 @@
           <form method="post" action="<?= url('notifications/custom') ?>" class="mt-3 grid grid-cols-1 md:grid-cols-6 gap-2">
             <input type="hidden" name="type" value="FEEDBACK_REPLY">
             <input type="hidden" name="user_id" value="<?= (int)$r['customer_id'] ?>">
+            <input type="hidden" name="appointment_id" value="<?= (int)$r['appointment_id'] ?>">
             <input type="hidden" name="title" value="Reply for appointment #<?= (int)$r['appointment_id'] ?>">
-            <textarea name="body" rows="2" class="md:col-span-5 w-full border rounded-lg px-3 py-2" placeholder="Write a short reply..."></textarea>
-            <button class="btn btn-primary md:col-span-1">Send Reply</button>
+            <textarea name="body" rows="2" class="md:col-span-5 w-full border rounded-lg px-3 py-2" placeholder="Write a short reply..." <?= !empty($r['staff_reply']) ? 'disabled' : '' ?>></textarea>
+            <button class="btn btn-primary md:col-span-1" <?= !empty($r['staff_reply']) ? 'disabled' : '' ?>>Send Reply</button>
           </form>
+          <?php if(!empty($r['staff_reply'])): ?>
+            <div class="text-xs text-gray-500 mt-1">Already replied. (Disable prevents accidental duplicates.)</div>
+          <?php endif; ?>
         </div>
       <?php endforeach; endif; ?>
     </div>
