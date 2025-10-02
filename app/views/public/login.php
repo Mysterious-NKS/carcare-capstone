@@ -61,8 +61,12 @@
   </div>
 </div>
 
-<!-- tarot only; no banish overlay on login -->
 <?php
+  // Eldritch overlay shows ONLY when the one-time session flag is present.
+  $ov = view('partials/glitch-overlays.php');
+  if (is_file($ov)) include $ov;
+
+  // Tarot modal for the admin gateway puzzle
   $tarot = view('partials/tarot-modal.php');
   if (is_file($tarot)) include $tarot;
 ?>

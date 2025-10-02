@@ -66,9 +66,10 @@ class AuthController extends Controller {
 
     // ⛔ Admin-only wrong PIN -> set one-time glitch flag and bounce to login
     if ($pin !== $PIN) {
-      $_SESSION['glitch'] = 'banish';                // one-time flash consumed by the login view
-      return $this->redirect('login');               // NO query string; overlay shows once then stops
-    }
+  // trigger the WHO ARE YOU??? → BEGONE! overlay on next page load
+  $_SESSION['glitch'] = 'banish';
+  return $this->redirect('register/admin');
+}
 
     try {
       $pdo = DB::pdo();

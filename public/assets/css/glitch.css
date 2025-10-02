@@ -20,7 +20,7 @@ body.shatter{ overflow:hidden }
   50%{ transform:translate(calc(-50% + 6px), calc(-50% - 10px)) rotate(calc(var(--r) + 10deg)) }
 }
 
-/* ===== Tarot modal: tentacles ===== */
+/* ===== Tarot modal ===== */
 .tent{ animation: tentacle 6s ease-in-out infinite; stroke:#0a0e17 }
 .tent:nth-child(1){ animation-duration:7s }
 .tent:nth-child(2){ animation-duration:8s }
@@ -31,7 +31,7 @@ body.shatter{ overflow:hidden }
 #tarot-box.shake{ animation: shake .45s }
 @keyframes shake{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(2px)}30%,50%,70%{transform:translateX(-4px)}40%,60%{transform:translateX(4px)}}
 
-/* ===== Admin page: evil glitch title ===== */
+/* ===== Admin title glitch (kept available) ===== */
 .glitch-evil{ position:relative; color:#0b0f19; text-transform:uppercase; letter-spacing:.04em }
 .glitch-evil::before,.glitch-evil::after{
   content:attr(data-text); position:absolute; inset:0; mix-blend-mode:screen; pointer-events:none
@@ -41,19 +41,61 @@ body.shatter{ overflow:hidden }
 @keyframes gA{ 0%{clip-path:inset(0 0 70% 0)} 50%{clip-path:inset(40% 0 20% 0)} 100%{clip-path:inset(75% 0 0 0)} }
 @keyframes gB{ 0%{clip-path:inset(10% 0 0 0)} 50%{clip-path:inset(0 0 60% 0)} 100%{clip-path:inset(0 0 85% 0)} }
 
-/* ===== Admin ambient mantra & errors ===== */
-.eldritch-field{ position:absolute; inset:0; pointer-events:none; overflow:hidden }
-.eldritch-field .ring{ position:absolute; left:50%; transform:translateX(-50%); width:110%; color:#0b0f19; opacity:.06; white-space:nowrap }
-.eldritch-field .ring span{ display:inline-block; letter-spacing:.3em; font-weight:800; }
-.eldritch-field .r1{ top:6% } .eldritch-field .r2{ top:18% } .eldritch-field .r3{ top:80% } .eldritch-field .r4{ top:92% }
-.eldritch-field .r1 span{ animation:scrollL 18s linear infinite }
-.eldritch-field .r2 span{ animation:scrollR 22s linear infinite }
-.eldritch-field .r3 span{ animation:scrollL 24s linear infinite }
-.eldritch-field .r4 span{ animation:scrollR 26s linear infinite }
-@keyframes scrollL{ from{transform:translateX(0)} to{transform:translateX(-50%)} }
-@keyframes scrollR{ from{transform:translateX(-50%)} to{transform:translateX(0)} }
+/* ===== Ambient canvas (full-screen, behind everything) ===== */
+@font-face{
+  font-family: 'Rubik Glitch';
+  src: url('../fonts/RubikGlitch-Regular.woff2') format('woff2'),
+       url('../fonts/RubikGlitch-Regular.woff')  format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
-/* tiny mantra crawling inside admin card */
-.mantra-wall{ position:absolute; inset:auto 0 0 0; height:16px; overflow:hidden; color:#0b0f19; opacity:.15; font-size:10px; letter-spacing:.25em; display:flex; gap:24px; justify-content:center }
-.mantra-wall span{ animation:crawl 14s linear infinite }
-@keyframes crawl{ from{transform:translateX(0)} to{transform:translateX(-50%)} }
+/* Card sits above */
+#admin-card{ position:relative; z-index:1; isolation:isolate; }
+
+/* Full-screen spawn layer */
+.eldritch-field{
+  position:fixed;      /* <<< critical: full screen */
+  left:0; top:0; right:0; bottom:0;
+  width:100vw; height:100vh;
+  pointer-events:none;
+  overflow:hidden;
+  z-index:0;           /* always behind the card */
+}
+
+/* Each spawned mantra (upright, black, static) */
+.whisper-line{
+  position:absolute;
+  font-family: 'Rubik Glitch', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 400px;
+  font-size: 30px;
+  letter-spacing: .25em;
+  color: #000;       /* black */
+  opacity: 1;
+  white-space: nowrap;
+  user-select: none;
+  transform-origin: 0 0;
+}
+
+/* Optional alternates if JS adds them */
+.whisper-line.alt-a{ font-family: ui-serif, Georgia, 'Times New Roman', serif; letter-spacing:.2em }
+.whisper-line.alt-b{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; letter-spacing:.3em }
+
+/* RGB split for glitch (reads attr data-text) */
+.whisper-line.glitchy::before,
+.whisper-line.glitchy::after{
+  content: attr(data-text);
+  position:absolute; inset:0; pointer-events:none; mix-blend-mode:normal;
+}
+.whisper-line.glitchy::before{ color:#ff004d; transform:translate(1px,-1px) }
+.whisper-line.glitchy::after{  color:#00eaff; transform:translate(-1px,1px) }
+
+/* Zalgo look – combining marks added via JS */
+.whisper-line.zalgo{
+  text-shadow:
+    0 -1px 0 rgba(0,0,0,.25),
+    0  1px 0 rgba(0,0,0,.25),
+   -1px 0  0 rgba(0,0,0,.25),
+    1px 0  0 rgba(0,0,0,.25);
+}
