@@ -23,9 +23,3 @@ define('BASE_URL',$baseUrl);
 spl_autoload_register(function($c){foreach([APP_PATH."/core/$c.php",APP_PATH."/controllers/$c.php",APP_PATH."/models/$c.php"] as $p){if(file_exists($p)){require_once $p;return;}}});
 function view($f){return VIEW_PATH.'/'.ltrim($f,'/');}
 function url($p){return BASE_URL.'/'.ltrim($p,'/');}
-
-/* NEW: explicitly load helpers that aren't autoloaded */
-$iconsHelper = APP_PATH . '/helpers/icons.php';
-if (is_file($iconsHelper)) {
-    require_once $iconsHelper; // defines icon()
-}
