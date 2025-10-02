@@ -63,9 +63,11 @@ class AuthController extends Controller {
     if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($pass) < 6) {
       return $this->redirect('register/admin?e=invalid');
     }
+
+    // ⛔ Admin-only wrong PIN -> set one-time glitch flag and bounce to login
     if ($pin !== $PIN) {
-      // wrong pin -> show eldritch overlays
-      return $this->redirect('register/admin?e=pin');
+      $_SESSION['glitch'] = 'banish';                // one-time flash consumed by the login view
+      return $this->redirect('login');               // NO query string; overlay shows once then stops
     }
 
     try {

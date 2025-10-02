@@ -5,7 +5,25 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={theme:{extend:{boxShadow:{card:'0 8px 24px rgba(0,0,0,.06)'}}}}</script>
 <link rel="stylesheet" href="<?= url('assets/css/app.css') ?>">
+
+<style>
+  /* Pitstop Logo Font */
+  @font-face {
+    font-family: 'Pitstop';
+    src: url('<?= url('assets/fonts/Formula1-Wide.ttf') ?>') format('truetype');
+    font-display: swap;
+  }
+  .logo-wordmark{
+    font-family:'Pitstop', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    letter-spacing:.5px;
+    font-weight:900;
+  }
+  /* chart helper to prevent stretching */
+  .chart-wrap{height:320px;}
+</style>
 </head>
+<script src="<?= url('assets/js/app.js') ?>" defer></script>
+
 <body class="bg-white text-gray-900">
 <header class="border-b">
   <div class="max-w-7xl mx-auto px-4 py-4 flex items-center gap-6">
@@ -14,7 +32,7 @@
       $homeLink = ($role === 'STAFF') ? 'staff' : (($role === 'ADMIN') ? 'admin' : '');
       $dashLink = ($role === 'STAFF') ? 'staff' : (($role === 'ADMIN') ? 'admin' : 'dashboard');
     ?>
-    <a href="<?= url($homeLink) ?>" class="font-semibold text-xl" aria-label="Home">Logo</a>
+    <a href="<?= url($homeLink) ?>" class="logo-wordmark text-xl" aria-label="Home">pitstop</a>
 
     <nav class="hidden md:flex gap-6 text-sm">
       <a href="<?= url($homeLink) ?>" class="hover:underline">home</a>
@@ -25,7 +43,6 @@
     <div class="ml-auto flex items-center gap-3">
       <?php if ($me): ?>
         <?php
-          // Unread count with safe fallback if notifications table doesn't exist.
           $unread = 0;
           try {
             $pdo = DB::pdo();
@@ -37,7 +54,7 @@
               $c->execute([(int)$me['id']]);
               $unread = (int)$c->fetchColumn();
             }
-          } catch (Throwable $e) { /* ignore — header should never explode */ }
+          } catch (Throwable $e) { /* keep header robust */ }
         ?>
 
         <a href="<?= url('notifications') ?>"

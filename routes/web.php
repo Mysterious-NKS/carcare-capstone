@@ -13,6 +13,7 @@ require_once dirname(__DIR__) . '/app/controllers/RatingController.php';
 require_once dirname(__DIR__) . '/app/controllers/HistoryController.php';
 require_once dirname(__DIR__) . '/app/controllers/StaffController.php';
 require_once dirname(__DIR__) . '/app/controllers/ServiceRecordController.php';
+require_once dirname(__DIR__) . '/app/controllers/AdminController.php';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public / Auth
@@ -27,7 +28,6 @@ $router->post('/register',      [AuthController::class, 'register']);
 $router->get('/logout',         [AuthController::class, 'logout']);
 
 // Hidden / easter egg registration routes
-// These load views from app/views/auth/register_staff.php and register_admin.php
 $router->get('/register/staff',  [AuthController::class, 'showRegisterStaff']);
 $router->post('/register/staff', [AuthController::class, 'registerStaff']);
 $router->get('/register/admin',  [AuthController::class, 'showRegisterAdmin']);
@@ -49,11 +49,8 @@ $router->get('/appointments/show',             [AppointmentController::class, 's
 $router->get('/appointments/view',             [AppointmentController::class, 'view']); // ?id=123
 $router->post('/appointments/cancel',          [AppointmentController::class, 'cancel']);
 
-// NOTE: specific path BEFORE the catch-all {id}
 $router->get('/appointments/{id}/reschedule',  [AppointmentController::class, 'rescheduleForm']);
 $router->post('/appointments/{id}/reschedule', [AppointmentController::class, 'rescheduleSave']);
-
-// Catch-all pretty URL for a single appointment
 $router->get('/appointments/{id}',             [AppointmentController::class, 'showById']);
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -70,8 +67,6 @@ $router->post('/customer/vehicles/delete', [VehicleController::class, 'destroy']
 $router->get('/customer/appointments',        [AppointmentController::class, 'index']);
 $router->get('/customer/appointments/create', [AppointmentController::class, 'create']);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Static pages
 // ─────────────────────────────────────────────────────────────────────────────
 $router->get('/about',   [PublicController::class, 'about']);
 $router->get('/contact', [PublicController::class, 'contact']);
@@ -104,7 +99,41 @@ $router->get('/staff/interactions',            [StaffController::class, 'interac
 $router->get('/staff/workflow',                [StaffController::class, 'workflow']);
 $router->get('/staff/schedule',                [StaffController::class, 'schedule']);
 
-// Staff actions
 $router->post('/appointments/{id}/status',            [AppointmentController::class, 'updateStatus']);
 $router->post('/appointments/{id}/staff-reschedule',  [AppointmentController::class, 'staffRescheduleSave']);
 $router->post('/service-records/save',                [ServiceRecordController::class, 'save']);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADMIN (Phase 6+)
+// ─────────────────────────────────────────────────────────────────────────────
+$router->get('/admin',                    [AdminController::class, 'dashboard']);
+$router->get('/admin/administration',     [AdminController::class, 'administration']);
+
+// Reporting
+$router->get('/admin/reports',            [AdminController::class, 'reports']);
+$router->get('/admin/reports/export/csv', [AdminController::class, 'reportsExportCsv']);
+$router->get('/admin/reports/print',      [AdminController::class, 'reportsPrint']);
+$router->get('/admin/reports/export/pdf', [AdminController::class, 'reportsExportPdf']);
+
+// Analytics
+$router->get('/admin/analytics',                [AdminController::class, 'analytics']);
+$router->get('/admin/analytics/export/pdf',     [AdminController::class, 'analyticsExportPdf']);
+
+// Ops quick actions
+$router->post('/admin/appointments/{id}/assign-staff', [AdminController::class, 'assignStaff']);
+$router->post('/admin/appointments/{id}/status',       [AdminController::class, 'changeStatus']);
+
+// Administration: Vehicles
+$router->post('/admin/vehicles',                       [AdminController::class, 'vehiclesStore']);
+$router->post('/admin/vehicles/{id}/update',           [AdminController::class, 'vehiclesUpdate']);
+$router->post('/admin/vehicles/{id}/delete',           [AdminController::class, 'vehiclesDelete']);
+
+// Administration: Users
+$router->post('/admin/users',                          [AdminController::class, 'usersStore']);
+$router->post('/admin/users/{id}/update',              [AdminController::class, 'usersUpdate']);
+$router->post('/admin/users/{id}/toggle',              [AdminController::class, 'usersToggle']); // lock/unlock
+
+// Administration: Customer Interactions (new)
+$router->get('/admin/interactions',                    [AdminController::class, 'interactions']);
+$router->post('/admin/interactions/feedback/{id}/delete', [AdminController::class, 'deleteFeedback']);
+$router->post('/admin/interactions/reply/{id}/delete',    [AdminController::class, 'deleteReply']);

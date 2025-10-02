@@ -65,6 +65,9 @@
 .btn-danger{ background:#fef2f2; color:#991b1b; border-color:#fecaca; }
 .btn-danger:hover{ background:#fee2e2; }
 
+/* NEW: small button variant for tight rows */
+.btn-sm{ padding:.35rem .65rem; font-size:.875rem; line-height:1.2; }
+
 /* Tiny badges */
 .badge{
   font-size:.75rem; padding:.2rem .5rem; border-radius:9999px;
@@ -192,4 +195,55 @@ input[type="email"]:focus, input[type="password"]:focus, select:focus, textarea:
 @media (prefers-reduced-motion: reduce){
   .card, .btn, .staff-tab, .segmented-item, .border.rounded-xl:hover { transition:none !important; }
   .skeleton::after{ animation:none; }
+}
+
+/* =========================
+   Small control helpers
+   ========================= */
+/* Keep selects/inputs compact and aligned with .btn-sm */
+.form-sm{
+  height:2.25rem;            /* ~36px */
+  font-size:.875rem;         /* text-sm */
+  line-height:1.25rem;
+}
+/* ===== Appointment Manager scroll area ===== */
+.scroll-area{
+  max-height: 460px;        /* keeps the card compact */
+  overflow: auto;
+  padding-right: .25rem;    /* tiny gutter for scrollbar */
+}
+
+/* Compact select/input to align with .btn-sm */
+.form-sm{
+  height:2.25rem;
+  font-size:.875rem;
+  line-height:1.25rem;
+}
+/* ===== Appointment Manager helpers (scroll + taller rows) ===== */
+.scroll-pane{
+  max-height: 540px;       /* keep the page from growing infinitely */
+  overflow-y: auto;
+  padding-right: .25rem;   /* slight space for scrollbar */
+}
+
+/* slightly taller, airier each appointment item */
+.appt-row{
+  padding: .75rem 0;       /* inner padding is provided by the child grid */
+}
+
+/* ===== Appointment Manager helpers ===== */
+.scroll-pane{
+  max-height: 560px;   /* keeps the card compact */
+  overflow-y: auto;
+  padding-right: .25rem; /* keeps right edge tidy with scrollbar */
+}
+
+/* Slightly taller row without enlarging controls */
+.appt-row{
+  min-height: 118px;    /* vertical room for vehicle + staff lines */
+}
+
+/* segmented-item when used like radio buttons in header */
+.segmented-item.tab-active{
+  background:#111827; color:#fff; border-color:#111827;
 }
