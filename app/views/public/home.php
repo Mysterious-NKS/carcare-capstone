@@ -13,7 +13,7 @@ $isLoggedIn = class_exists('Auth')
   <!-- Hero -->
   <section class="grid md:grid-cols-2 gap-8 items-center py-16 md:py-20">
     <div>
-      <h1 class="text-6xl md:text-7xl font-extrabold leading-none mb-6">title</h1>
+      <h1 class="text-6xl md:text-7xl font-extrabold leading-none mb-6">pitstop</h1>
 
       <p class="text-gray-700 leading-relaxed max-w-xl">
         Our mission is to deliver premium automotive services that are purely made from expertise and precision.
@@ -54,7 +54,7 @@ $isLoggedIn = class_exists('Auth')
       </div>
 
       <p class="text-gray-200 leading-relaxed max-w-4xl mt-6">
-        At [name], we are dedicated to crafting premium automotive experiences made exclusively from
+        At CarCare, we are dedicated to crafting premium automotive experiences made exclusively from
         high-quality service and precision materials. We embrace modern engineering while incorporating
         unique creative elements that bring warmth and personality to every vehicle.
       </p>

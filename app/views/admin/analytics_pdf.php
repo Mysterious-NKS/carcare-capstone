@@ -108,3 +108,4 @@ function linePath(array $values, float $w, float $h, float $max): string {
   </table>
 </body>
 </html>
+ 

@@ -134,8 +134,12 @@
             </label>
           </div>
 
-          <?php if (!empty($record['photos_json'])):
-            $imgs = json_decode((string)$record['photos_json'], true) ?: []; ?>
+          <?php
+            // support either column: photos (current) or photos_json (legacy)
+            $raw  = $record['photos'] ?? ($record['photos_json'] ?? null);
+            $imgs = $raw ? (json_decode((string)$raw, true) ?: []) : [];
+            if (!empty($imgs)):
+          ?>
             <div class="mt-3 grid grid-cols-3 gap-2">
               <?php foreach ($imgs as $img): ?>
                 <img src="<?= url('uploads/appointments/'.$selected['id'].'/'.$img) ?>"

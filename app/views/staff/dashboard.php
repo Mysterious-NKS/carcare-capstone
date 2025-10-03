@@ -7,6 +7,7 @@
     </div>
     <a href="<?= url('staff/workflow') ?>" class="btn btn-primary">Add Appointment</a>
   </div>
+<?php require_once dirname(__DIR__, 2) . '/helpers/icons.php'; ?>
 
   <?php include view('partials/staff_tabs.php'); ?>
 

@@ -1,6 +1,16 @@
 <?php
+/**
+ * app/views/customer/appointment_show.php
+ *
+ * Expects:
+ *   $a      — appointment row (service/vehicle/status/etc.)
+ *   $record — service_records row or null
+ *
+ * Shows: work performed, diagnostics, odometer, cost, and photos (if any).
+ */
 $e = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES);
-/** @var array $a */
+
+// status badge styles
 $badge = [
   'PENDING'=>'border-amber-300 text-amber-700 bg-amber-50',
   'APPROVED'=>'border-blue-300 text-blue-700 bg-blue-50',
@@ -12,9 +22,29 @@ $badge = [
   'CANCELLED'=>'border-rose-300 text-rose-700 bg-rose-50',
 ][$a['status']] ?? 'border-gray-300 text-gray-700 bg-gray-50';
 
-// Optional fields if you later store them in service_records, prevent notices now
-$workDone = trim($a['work_done'] ?? '');
-$diagNotes = trim($a['diagnostics_notes'] ?? '');
+// Normalize service-record fields (safe defaults if none yet)
+$workDone   = '';
+$diagNotes  = '';
+$odomKm     = null;
+$costRm     = null;
+$photosList = [];
+
+// If a service record exists, pull values
+if (is_array($record)) {
+  $workDone  = trim((string)($record['work_done'] ?? ''));
+  $diagNotes = trim((string)($record['diagnostics_notes'] ?? ''));
+  $odomKm    = isset($record['odometer_km']) ? (int)$record['odometer_km'] : null;
+  $costRm    = $record['cost'] ?? null;
+
+  // Support either `photos` (JSON) or legacy `photos_json`
+  if (!empty($record['photos'])) {
+    $arr = json_decode((string)$record['photos'], true);
+    if (is_array($arr)) $photosList = $arr;
+  } elseif (!empty($record['photos_json'])) {
+    $arr = json_decode((string)$record['photos_json'], true);
+    if (is_array($arr)) $photosList = $arr;
+  }
+}
 ?>
 <div class="max-w-5xl mx-auto px-4 py-10">
   <a href="<?= url('appointments') ?>" class="inline-flex items-center text-sm mb-6 hover:underline">← back to appointments</a>
@@ -32,7 +62,7 @@ $diagNotes = trim($a['diagnostics_notes'] ?? '');
       </span>
     </div>
 
-    <!-- Four info cards -->
+    <!-- Top info cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
       <div class="border rounded-xl p-4">
         <div class="text-xs text-gray-500">Service Date</div>
@@ -55,7 +85,7 @@ $diagNotes = trim($a['diagnostics_notes'] ?? '');
       </div>
     </div>
 
-    <!-- Work & Diagnostics -->
+    <!-- Service record details (staff output) -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
       <div class="border rounded-xl p-4">
         <div class="font-semibold mb-2">Work Performed</div>
@@ -70,6 +100,36 @@ $diagNotes = trim($a['diagnostics_notes'] ?? '');
         </div>
       </div>
     </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+      <div class="border rounded-xl p-4">
+        <div class="text-xs text-gray-500">Odometer (km)</div>
+        <div class="mt-1 font-semibold"><?= $odomKm !== null ? number_format($odomKm) : '—' ?></div>
+      </div>
+      <div class="border rounded-xl p-4">
+        <div class="text-xs text-gray-500">Final Cost (RM)</div>
+        <div class="mt-1 font-semibold">
+          <?= ($costRm !== null && $costRm !== '') ? 'RM '.number_format((float)$costRm, 2) : '—' ?>
+        </div>
+      </div>
+    </div>
+
+    <?php if (!empty($photosList)): ?>
+      <div class="mt-6">
+        <div class="font-semibold mb-2">Photos</div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <?php foreach ($photosList as $img): ?>
+            <a href="<?= url('uploads/appointments/'.(int)$a['id'].'/'.$e($img)) ?>" target="_blank" class="block">
+              <img
+                src="<?= url('uploads/appointments/'.(int)$a['id'].'/'.$e($img)) ?>"
+                alt="photo"
+                class="w-full h-36 object-cover rounded-lg border"
+                loading="lazy">
+            </a>
+          <?php endforeach; ?>
+        </div>
+      </div>
+    <?php endif; ?>
 
     <?php if (!in_array($a['status'], ['CANCELLED','COMPLETED'], true)): ?>
       <div class="mt-8 flex gap-3">

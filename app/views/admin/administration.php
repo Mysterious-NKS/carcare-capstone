@@ -4,7 +4,7 @@ $e = fn($s)=>htmlspecialchars((string)$s,ENT_QUOTES);
 /** Page-level props for layout */
 $sectionTitle = "the driver’s seat."; // shown below tabs
 
-$slot = function() use ($vehicles, $vehPager, $users, $e) {
+$slot = function() use ($vehicles, $vehPager, $users, $userQ, $e) {
 ?>
   <!-- Local anchor tabs -->
   <div class="mb-4 flex items-center gap-2 text-sm">
@@ -175,8 +175,16 @@ $slot = function() use ($vehicles, $vehPager, $users, $e) {
       <div class="lg:col-span-3 card shadow-card p-5">
         <div class="flex items-center justify-between mb-4">
           <div class="font-semibold text-lg">User Management</div>
-          <input type="text" class="border rounded-lg px-3 py-2 w-56" placeholder="Search name/email…"
-                 oninput="filterList(this,'#user-list')">
+
+          <!-- DB-backed search (includes all statuses) -->
+          <form method="get" action="<?= url('admin/administration#users') ?>" class="flex items-center gap-2">
+            <input type="text"
+                   name="user_q"
+                   value="<?= $e($userQ ?? '') ?>"
+                   class="border rounded-lg px-3 py-2 w-56"
+                   placeholder="Search name / email / ID">
+            <button class="btn btn-sm">Search</button>
+          </form>
         </div>
 
         <?php if (empty($users)): ?>
@@ -271,15 +279,6 @@ $slot = function() use ($vehicles, $vehPager, $users, $e) {
       if(!el) return;
       el.classList.toggle('hidden');
     });
-
-    // simple client-side filter for the user list
-    function filterList(input, listSelector){
-      const q = (input.value || "").toLowerCase();
-      document.querySelectorAll(listSelector + " > li").forEach(li=>{
-        li.style.display = li.textContent.toLowerCase().includes(q) ? "" : "none";
-      });
-    }
-    window.filterList = filterList;
   </script>
 <?php
 }; // end $slot

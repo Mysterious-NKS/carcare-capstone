@@ -4,7 +4,7 @@
 
   <div id="tarot-box"
        class="relative z-10 max-w-sm mx-auto mt-32 bg-white border rounded-2xl shadow-card p-6">
-    <h2 class="text-xl font-bold mb-2">Choose an arcana card</h2>
+    <h2 class="text-xl font-bold mb-2">Choose an Tarot card</h2>
     <p class="text-gray-600 mb-4">To who shall we praise</p>
 
     <!-- Turn OFF browser autocomplete on the form -->

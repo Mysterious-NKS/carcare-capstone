@@ -303,20 +303,23 @@ class AppointmentController extends Controller
         if (!$a) return $this->redirect('appointments');
 
         // Pull service record (if exists) for the detailed panel
-        $record = null;
-        if ($this->tableExists($pdo, 'service_records')) {
-            $rs = $pdo->prepare("SELECT * FROM service_records WHERE appointment_id=? LIMIT 1");
-            $rs->execute([$id]);
-            $record = $rs->fetch(PDO::FETCH_ASSOC) ?: null;
+        // Pull service record (if exists) for the detailed panel
+$record = null;
+if ($this->tableExists($pdo, 'service_records')) {
+    $rs = $pdo->prepare("SELECT * FROM service_records WHERE appointment_id=? LIMIT 1");
+    $rs->execute([$id]);
+    $record = $rs->fetch(PDO::FETCH_ASSOC) ?: null;
 
-            if ($record && !empty($record['photos'])) {
-                // decode json safely
-                $decoded = json_decode($record['photos'], true);
-                $record['photos'] = is_array($decoded) ? $decoded : [];
-            } else {
-                $record['photos'] = [];
-            }
-        }
+    // Support either column name; your DB uses `photos`
+    $photosRaw = $record['photos'] ?? ($record['photos_json'] ?? null);
+    if ($photosRaw) {
+        $decoded = json_decode($photosRaw, true);
+        $record['photos'] = is_array($decoded) ? $decoded : [];
+    } else {
+        $record['photos'] = [];
+    }
+}
+
 
         $this->renderAny(
             ['appointments/show.php', 'customer/appointment_show.php'],

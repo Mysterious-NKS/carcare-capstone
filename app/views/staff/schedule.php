@@ -1,3 +1,5 @@
+<?php require_once dirname(__DIR__, 2) . '/helpers/icons.php'; ?>
+
 <?php $e = fn($s)=>htmlspecialchars((string)$s,ENT_QUOTES); ?>
 <div class="max-w-7xl mx-auto px-4 py-10">
   <div class="flex items-center justify-between mb-6">

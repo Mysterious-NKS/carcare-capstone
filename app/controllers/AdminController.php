@@ -404,14 +404,63 @@ if ($this->tableExists($pdo,'users')) {
         ];
     }
 
+    // >>>>>>> PASTE THIS DB USER SEARCH BLOCK HERE (start) <<<<<<<
+    $colExists = function(string $table, string $col) use ($pdo): bool {
+        $q = $pdo->prepare("SELECT 1 FROM information_schema.columns
+                            WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ? LIMIT 1");
+        $q->execute([$table, $col]);
+        return (bool)$q->fetchColumn();
+    };
+
+    $userQ = trim($_GET['user_q'] ?? '');
+
+    // best-available name column
+    $nameExpr =
+        ($colExists('users','full_name') ? 'full_name' :
+        ($colExists('users','name')      ? 'name'      : "CONCAT('User ', id)")) . ' AS name';
+
+    $roleExpr     = $colExists('users','role')      ? 'role'      : "'' AS role";
+    $statusExpr   = $colExists('users','status')    ? 'status'    : "NULL AS status";
+    $lockedExpr   = $colExists('users','is_locked') ? 'is_locked' : "0 AS is_locked";
+
+    if ($userQ !== '') {
+        $where  = [];
+        $params = [];
+
+        if (ctype_digit($userQ)) { $where[] = "id = ?"; $params[] = (int)$userQ; }
+
+        $like = '%' . $userQ . '%';
+        $where[] = "email LIKE ?"; $params[] = $like;
+
+        if ($colExists('users','full_name')) { $where[] = "full_name LIKE ?"; $params[] = $like; }
+        if ($colExists('users','name'))      { $where[] = "name LIKE ?";      $params[] = $like; }
+
+        $sql = "SELECT id, $nameExpr, email, $roleExpr, $statusExpr, $lockedExpr
+                FROM users
+                WHERE " . implode(' OR ', $where) . "
+                ORDER BY created_at DESC
+                LIMIT 250";
+        $st = $pdo->prepare($sql);
+        $st->execute($params);
+        $users = $st->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $sql = "SELECT id, $nameExpr, email, $roleExpr, $statusExpr, $lockedExpr
+                FROM users
+                ORDER BY created_at DESC
+                LIMIT 200";
+        $users = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    }
+    // <<<<<<< PASTE ENDS (end) <<<<<<<
+
+    // Finally render, passing BOTH vehicle data and the new users + query:
     $this->render('admin/administration.php', [
-        'adminName' => $adminName,
         'vehicles'  => $vehicles,
         'vehPager'  => $vehPager,
         'users'     => $users,
-        'usersPager'=> $usersPager,
+        'userQ'     => $userQ,
     ]);
 }
+
 
 
 
